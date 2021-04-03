@@ -1,0 +1,89 @@
+# docker-compose up -d
+version: '3.7'
+
+services:
+  comet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: xvwvx/goim
+    restart: always
+    env_file: .env
+    ports:
+      - "3101:3101"
+      - "3102:3102"
+      - "3109:3009"
+    depends_on:
+      - redis
+      - zookeeper
+      - kafka
+      - discovery
+    entrypoint: comet
+
+  logic:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: xvwvx/goim
+    restart: always
+    env_file: .env
+    ports:
+      - "3111:3111"
+      - "3119:3119"
+    depends_on:
+      - redis
+      - zookeeper
+      - kafka
+      - discovery
+    entrypoint: logic
+
+  job:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: xvwvx/goim
+    restart: always
+    env_file: .env
+    depends_on:
+      - redis
+      - zookeeper
+      - kafka
+      - discovery
+    entrypoint: job
+
+  discovery:
+    build:
+      context: .
+      dockerfile: discovery.Dockerfile
+    image: xvwvx/discovery
+    restart: always
+    ports:
+      - "7171:7171"
+
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - 6379:6379
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - 9092:9092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
