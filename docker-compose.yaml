@@ -12,7 +12,7 @@ services:
     ports:
       - "3101:3101"
       - "3102:3102"
-      - "3109:3009"
+      - "3109:3109"
     depends_on:
       - redis
       - zookeeper
